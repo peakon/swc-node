@@ -58,15 +58,17 @@ export const resolve: ResolveFn = async (specifier, context, nextResolve) => {
     moduleResolutionCache,
   )
 
+  const isTsModule = resolvedModule
+    ? EXTENSIONS.includes(resolvedModule.extension) && !resolvedModule.resolvedFileName.includes('/node_modules/')
+    : EXTENSIONS.some((ext) => specifier.endsWith(ext)) && !fileURLToPath(specifier).includes('/node_modules/')
+
   // import from local project to local project TS file
-  if (
-    resolvedModule &&
-    !resolvedModule.resolvedFileName.includes('/node_modules/') &&
-    EXTENSIONS.includes(resolvedModule.extension)
-  ) {
+  if (isTsModule) {
     return {
       format: 'ts',
-      url: pathToFileURL(resolvedModule.resolvedFileName).href,
+      url: resolvedModule
+        ? pathToFileURL(resolvedModule.resolvedFileName).href
+        : pathToFileURL(fileURLToPath(specifier)).href,
       shortCircuit: true,
     }
   }
