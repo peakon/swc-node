@@ -1,148 +1,129 @@
-# `swc-node`
+# `@swc-node/register`
+
+<a href="https://npmcharts.com/compare/@swc-node/register?minimal=true"><img src="https://img.shields.io/npm/dm/@swc-node/register.svg?sanitize=true" alt="Downloads" /></a>
 
 > 🚀 Help me to become a full-time open-source developer by [sponsoring me on Github](https://github.com/sponsors/Brooooooklyn)
 
-**_Fast `TypeScript/JavaScript` transformer without `node-gyp` and postinstall script_**.
-
-<p>
-  <a href="https://github.com/swc-project/swc-node/actions"><img src="https://github.com/swc-project/swc-node/workflows/CI/badge.svg" alt="Build Status" /></a>
-  <a href="https://npmcharts.com/compare/@swc-node/core?minimal=true"><img src="https://img.shields.io/npm/dm/@swc-node/core.svg?sanitize=true" alt="Downloads" /></a>
-  <a href="https://github.com/swc-project/swc-node/blob/master/LICENSE"><img src="https://img.shields.io/npm/l/@swc-node/core.svg?sanitize=true" alt="License" /></a>
-</p>
-
 ## Usage
 
-Run TypeScript with node, without compilation or typechecking:
+```ts
+const { register } = require('@swc-node/register/register')
+
+register({
+  ...
+})
+```
+
+### CLI
+
+```
+node -r @swc-node/register index.ts
+```
+
+### Mocha
+
+```
+mocha --require @swc-node/register --watch-extensions ts,tsx "test/**/*.{ts,tsx}" [...args]
+```
+
+### ava
+
+```json
+// package.json
+
+{
+  "ava": {
+    "extensions": ["ts", "tsx"],
+    "require": ["@swc-node/register"],
+    "files": ["packages/**/*.spec.{ts,tsx}"]
+  }
+}
+```
+
+## Read `tsconfig.json`
+
+set `SWC_NODE_PROJECT` or `TS_NODE_PROJECT` env:
 
 ```bash
-npm i -D @swc-node/register
-node -r @swc-node/register script.ts
-node --import @swc-node/register/esm-register script.ts # for esm project with node>=20.6
-node --loader @swc-node/register/esm script.ts # for esm project with node<=20.5, deprecated
+SWC_NODE_PROJECT=./tsconfig.test.json mocha --require @swc-node/register --watch-extensions ts,tsx "test/**/*.{ts,tsx}" [...args]
 ```
 
-Pass `--enable-source-maps` to node for esm projects
+`@swc-node/register` respect the following option in `tsconfig`:
 
-Set environment variable SWCRC=true when you would like to load .swcrc file
+### `extends`
 
-```bash
-SWCRC=true node -r @swc-node/register script.ts
+`@swc-node/register` respect the extends key in `tsconfig.json`, and use the **merged** values.
+
+### `compilerOptions.target`
+
+```ts
+switch (target) {
+  case ts.ScriptTarget.ES3:
+    return 'es3'
+  case ts.ScriptTarget.ES5:
+    return 'es5'
+  case ts.ScriptTarget.ES2015:
+    return 'es2015'
+  case ts.ScriptTarget.ES2016:
+    return 'es2016'
+  case ts.ScriptTarget.ES2017:
+    return 'es2017'
+  case ts.ScriptTarget.ES2018:
+    return 'es2018'
+  case ts.ScriptTarget.ES2019:
+    return 'es2019'
+  case ts.ScriptTarget.ES2020:
+  case ts.ScriptTarget.ES2021:
+  case ts.ScriptTarget.ES2022:
+  case ts.ScriptTarget.ESNext:
+  case ts.ScriptTarget.Latest:
+    return 'es2020'
+  case ts.ScriptTarget.JSON:
+    return 'es5'
+}
 ```
 
-```typescript
-#!/usr/bin/env node --import swc-register-esm
+### `compilerOptions.jsx`
 
-// your code
+If `filename` endsWith `.jsx` or `.tsx`, always set the `jsx: true` in `swc config` regards the `jsx` option in `tsconfig`.
+If `filename` not endsWith `.jsx` or `.tsx`, set the `jsx: Boolean(tsconfig.compilerOptions.jsx)` in `swc config`.
+
+### compilerOptions.module
+
+> notes, if `compilerOptions.module` higher than `es2020`, the `dynamicImport` in `swc config` will be set to `true`.
+
+```ts
+switch (moduleKind) {
+  case ts.ModuleKind.CommonJS:
+    return 'commonjs'
+  case ts.ModuleKind.UMD:
+    return 'umd'
+  case ts.ModuleKind.AMD:
+    return 'amd'
+  case ts.ModuleKind.ES2015:
+  case ts.ModuleKind.ES2020:
+  case ts.ModuleKind.ESNext:
+  case ts.ModuleKind.None:
+    return 'es6'
+  case ts.ModuleKind.System:
+    throw new TypeError('Do not support system kind module')
+}
 ```
 
-run with shebang, add `TS_NODE_PROJECT=null`(`#!/usr/bin/env TS_NODE_PROJECT=null node --import swc-register-esm`) to use ignore tsconfig.json
+### compilerOptions.experimentalDecorators
 
-## @swc-node/core
+Respect the boolean value in `tsconfig`.
 
-Fastest `TypeScript` transformer.
+### compilerOptions.emitDecoratorMetadata
 
-Detail: [@swc-node/core](./packages/core)
+Respect the boolean value in `tsconfig`.
 
-### Benchmark
+### compilerOptions.esModuleInterop
 
-> transform RxJS `AjaxObservable.ts` to ES2015 & CommonJS `JavaScript`. Benchmark code: [bench](./bench/index.ts)
+Respect the boolean value in `tsconfig`.
 
-**Hardware info**:
+### include/exclude
 
-```
-Model Name: MacBook Pro
-Model Identifier: MacBookPro15,1
-Processor Name: 6-Core Intel Core i7
-Processor Speed: 2.6 GHz
-Number of Processors: 1
-Total Number of Cores: 6
-L2 Cache (per Core): 256 KB
-L3 Cache: 12 MB
-Hyper-Threading Technology: Enabled
-Memory: 16 GB
-```
+`TypeScript` gives files list to `@swc-node/register`, if parse `tsconfig.json` failed or files list empty, `@swc-node/register` will transform all files which were required.
 
-#### `transformSync`
-
-```bash
-esbuild x 510 ops/sec ±1.28% (88 runs sampled)
-@swc-node/core x 438 ops/sec ±1.00% (88 runs sampled)
-typescript x 28.83 ops/sec ±10.20% (52 runs sampled)
-babel x 24.21 ops/sec ±10.66% (46 runs sampled)
-Transform rxjs/AjaxObservable.ts benchmark bench suite: Fastest is esbuild
-```
-
-#### `transform` parallel
-
-`UV_THREADPOOL_SIZE=11 yarn bench`
-
-```bash
-@swc-node/core x 1,253 ops/sec ±0.90% (75 runs sampled)
-esbuild x 914 ops/sec ±1.31% (77 runs sampled)
-Transform rxjs/AjaxObservable.ts parallel benchmark bench suite: Fastest is @swc-node/core
-```
-
-`yarn bench`
-
-```bash
-@swc-node/core x 1,123 ops/sec ±0.95% (77 runs sampled)
-esbuild x 847 ops/sec ±3.74% (71 runs sampled)
-Transform rxjs/AjaxObservable.ts parallel benchmark bench suite: Fastest is @swc-node/core
-```
-
-## @swc-node/jest
-
-Fastest jest `TypeScript` transformer.
-
-Detail: [@swc-node/jest](./packages/jest)
-
-### Performance glance
-
-> Testing in pure `TypeScript` project, compile target is `ES2018`.
-> Running with `npx jest --no-cache`, `ts-jest` was configured with `isolatedModules: true`
-
-#### ts-jest
-
-```
-Test Suites: 49 passed, 49 total
-Tests:       254 passed, 254 total
-Snapshots:   53 passed, 53 total
-Time:        54.631 s
-Ran all test suites.
-✨  Done in 62.71s.
-```
-
-#### @swc-node/jest
-
-```
-Test Suites: 49 passed, 49 total
-Tests:       254 passed, 254 total
-Snapshots:   53 passed, 53 total
-Time:        10.511 s
-Ran all test suites.
-✨  Done in 14.34s.
-```
-
-## @swc-node/register
-
-Faster `ts-node/register/transpile-only` alternative.
-
-Detail: [@swc-node/register](./packages/register)
-
-## Development
-
-### Install dependencies
-
-- `pnpm i`
-
-### Build and Test
-
-- `pnpm build`
-
-- `pnpm test`
-
-## Sponsors
-
-<p align="center">
-  <img src="https://sponsors.lyn.one/sponsors.svg" alt="sponsors" />
-</p>
+And if failed to parse `tsconfig.json`, `@swc-node/register` will print warning which contains failed reason.
