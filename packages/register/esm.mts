@@ -92,17 +92,11 @@ interface LoadResult {
 type LoadArgs = [url: string, context: LoadContext, nextLoad?: (...args: LoadArgs) => Promise<LoadResult>]
 type LoadFn = (...args: Required<LoadArgs>) => Promise<LoadResult>
 
-const tsconfigForSWCNode = {
-  ...tsconfig,
-  paths: undefined,
-  baseUrl: undefined,
-}
-
 export const load: LoadFn = async (url, context, nextLoad) => {
-  if (context.format === 'ts') {
+  if (context.format === 'ts' || (tsconfig.allowJs && context.format === 'module')) {
     const { source } = await nextLoad(url, context)
     const code = typeof source === 'string' ? source : Buffer.from(source).toString()
-    const compiled = await compile(code, fileURLToPath(url), tsconfigForSWCNode, true)
+    const compiled = await compile(code, fileURLToPath(url), tsconfig, true)
     return {
       format: 'module',
       source: compiled,
