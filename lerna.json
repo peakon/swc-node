@@ -1,9 +1,0 @@
-{
-  "npmClient": "pnpm",
-  "version": "independent",
-  "command": {
-    "version": {
-      "message": "chore(release): publish"
-    }
-  }
-}
