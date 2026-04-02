@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v5
 
       - name: Setup node
         uses: actions/setup-node@v4
@@ -59,7 +59,7 @@ jobs:
           path: ~/.pnpm-store
           key: npm-cache-ubuntu-latest-node@20
 
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v5
 
       - name: 'Install dependencies'
         run: pnpm install
