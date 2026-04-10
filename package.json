@@ -53,7 +53,7 @@
     "ava": "^6.1.1",
     "benchmark": "^2.1.4",
     "colorette": "^2.0.20",
-    "cross-env": "^7.0.3",
+    "cross-env": "^10.0.0",
     "esbuild": "^0.28.0",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
